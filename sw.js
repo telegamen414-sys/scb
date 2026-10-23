@@ -1,5 +1,5 @@
 // Офлайн-кеш справочника. Версию меняет build.py при каждой сборке.
-const VERSION = 'scb-4d8dec8a0c';
+const VERSION = 'scb-98b73b7b3c';
 const CORE = ['./', './index.html', './app.bin', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
@@ -18,18 +18,21 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  const same = url.origin === self.location.origin;
-  // Своё — сначала из кеша (работает без сети). Шрифты и библиотеки — кешируются при первом заходе.
-  e.respondWith(
-    caches.match(req, { ignoreSearch: same }).then((hit) => {
-      if (hit) return hit;
-      return fetch(req).then((res) => {
-        if (res && (res.ok || res.type === 'opaque')) {
-          const copy = res.clone();
-          caches.open(VERSION).then((c) => c.put(req, copy));
-        }
+  if (url.origin === self.location.origin) {
+    // Своё: сначала сеть (с проверкой изменений — без лишней загрузки), без сети — из кеша.
+    e.respondWith(
+      fetch(req, { cache: 'no-cache' }).then((res) => {
+        if (res && res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); }
         return res;
-      }).catch(() => (req.mode === 'navigate' ? caches.match('./index.html') : undefined));
-    })
+      }).catch(() => caches.match(req, { ignoreSearch: true }).then((hit) => hit || caches.match('./index.html')))
+    );
+    return;
+  }
+  // Шрифты и библиотеки: из кеша, а при первом заходе — из сети с сохранением.
+  e.respondWith(
+    caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+      if (res && (res.ok || res.type === 'opaque')) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); }
+      return res;
+    }))
   );
 });
