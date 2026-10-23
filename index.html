@@ -50,7 +50,7 @@
 </form>
 <script>
 (function () {
-  var SALT = 'Sgb8vgI8iStS1LS7R9NxxQ==', IV = 'Lje4bmmYrXcSqX/k', ITER = 310000, KEYNAME = 'scb.key.e05ded8595';
+  var SALT = 'Sgb8vgI8iStS1LS7R9NxxQ==', IV = 'zOmq7wia8EES4+6s', ITER = 310000, KEYNAME = 'scb.key.e05ded8595';
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
   var b64 = function (s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
   var toB64 = function (buf) { var u = new Uint8Array(buf), s = ''; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); };
@@ -73,6 +73,7 @@
   }
   var saved = store.get();
   if (saved) {
+    try { sessionStorage.setItem('scb.k', saved); } catch (e) {}
     crypto.subtle.importKey('raw', b64(saved), 'AES-GCM', true, ['decrypt']).then(open).then(show).catch(function () { store.del(); });
   }
   document.getElementById('f').addEventListener('submit', function (ev) {
@@ -82,7 +83,7 @@
     derive(document.getElementById('pw').value).then(function (key) {
       var remember = document.getElementById('rem').checked;
       return open(key).then(function (html) {
-        var save = remember ? crypto.subtle.exportKey('raw', key).then(function (raw) { store.set(toB64(raw)); }) : Promise.resolve();
+        var save = crypto.subtle.exportKey('raw', key).then(function (raw) { var r = toB64(raw); try { sessionStorage.setItem('scb.k', r); } catch (e) {} if (remember) store.set(r); });
         return save.then(function () { show(html); });
       });
     }).catch(function (e) {
