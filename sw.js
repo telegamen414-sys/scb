@@ -1,5 +1,5 @@
 // Офлайн-кеш справочника. Версию меняет build.py при каждой сборке.
-const VERSION = 'scb-1069fa2cae';
+const VERSION = 'scb-c66198b55e';
 const CORE = ['./', './index.html', './app.bin', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
