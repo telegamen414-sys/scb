@@ -1,5 +1,5 @@
 // Офлайн-кеш справочника. Версию меняет build.py при каждой сборке.
-const VERSION = 'scb-93022c4007';
+const VERSION = 'scb-9d8ea059f8';
 const CORE = ['./', './index.html', './app.bin', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
@@ -30,8 +30,9 @@ self.addEventListener('fetch', (e) => {
     // Своё: сначала сеть (с проверкой изменений — без лишней загрузки), без сети — из кеша.
     e.respondWith(
       fetch(req, { cache: 'no-cache' }).then((res) => {
-        if (res && res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); }
-        return res;
+        if (res && res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); return res; }
+        // Сервер ответил ошибкой (например, во время обновления сайта) — отдаём сохранённую копию.
+        return caches.match(req, { ignoreSearch: true }).then((hit) => hit || res);
       }).catch(() => caches.match(req, { ignoreSearch: true }).then((hit) => hit || caches.match('./index.html')))
     );
     return;
