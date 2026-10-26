@@ -4,9 +4,8 @@ await scr.loadAsync();
 const get = (pre) => scr.children.find((n) => n.name.startsWith(pre));
 for (const f of [{ family: "Onest", style: "SemiBold" }, { family: "Onest", style: "Regular" }, { family: "Unbounded", style: "SemiBold" }, { family: "JetBrains Mono", style: "Regular" }]) await figma.loadFontAsync(f);
 let page = figma.root.children.find((p) => p.name === "Карта приложения");
-if (page) page.remove();
-page = figma.createPage(); page.name = "Карта приложения";
-figma.root.insertChild(0, page);
+if (page) { await page.loadAsync(); for (const n of page.children.slice()) n.remove(); }
+else { page = figma.createPage(); page.name = "Карта приложения"; figma.root.insertChild(0, page); }
 await figma.setCurrentPageAsync(page);
 const hex = (h) => ({ r: parseInt(h.slice(1, 3), 16) / 255, g: parseInt(h.slice(3, 5), 16) / 255, b: parseInt(h.slice(5, 7), 16) / 255 });
 const S = 0.4, TW = 390 * S, TH = 844 * S, COL = TW + 150, ROW = TH + 150, X0 = 80, Y0 = 220;
