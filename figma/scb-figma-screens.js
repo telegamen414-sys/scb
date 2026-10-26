@@ -114,7 +114,7 @@ function tabBar(sc, active) {
 }
 function hotspot(sc, x, y, w, h, name) {
   const r = figma.createRectangle(); r.name = "↗ " + name; r.resize(w, h); r.fills = [solid("#FFFFFF", 0)];
-  sc.fixed.push({ node: r, x, y });
+  sc.frame.appendChild(r); r.x = x; r.y = y; try { r.scrollBehavior = "FIXED"; } catch (e) {}
   return r;
 }
 async function heading(sc, label, count) {
