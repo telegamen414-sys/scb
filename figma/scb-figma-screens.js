@@ -404,6 +404,15 @@ for (const k of ["book", "sec", "item", "doc", "docsearch"]) {
   const sc = SCREENS[k];
   for (const f of sc.fixed.filter((f) => !f.node.parent || f.node.parent.type === "PAGE")) { sc.frame.appendChild(f.node); f.node.x = f.x; f.node.y = f.y; try { f.node.scrollBehavior = "FIXED"; } catch (e) {} }
 }
+// закрепляем шапку, панель вкладок и зоны переходов при прокрутке
+let fixedInfo = [];
+for (const sc of Object.values(SCREENS)) {
+  const ch = sc.frame.children; let k = 0;
+  for (let i = ch.length - 1; i >= 0; i--) { const n = ch[i]; if (n.name.startsWith("↗") || n.name === "TopBar" || n.name === "TabBar") { k++; try { n.scrollBehavior = "FIXED"; } catch (e) {} } else break; }
+  try { sc.frame.numberOfFixedChildren = k; } catch (e) {}
+  fixedInfo.push(k);
+}
+LOG.push("fixed " + fixedInfo.join(","));
 try { scrPage.flowStartingPoints = [{ nodeId: SCREENS.login.frame.id, name: "Справочник СЦБ" }]; } catch (e) {}
 await figma.setCurrentPageAsync(scrPage);
 figma.viewport.scrollAndZoomIntoView(Object.values(SCREENS).map((s) => s.frame));
