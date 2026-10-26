@@ -237,7 +237,7 @@ const IT = S1.items[0];
   const media = AL("VERTICAL", { name: "Медиа", itemSpacing: 10 }); card(media, 12); head.appendChild(media); fillW(media);
   media.appendChild(inst("Segmented"));
   const ph = figma.createFrame(); ph.name = "Фото"; ph.resize(298, 196); ph.cornerRadius = 14; ph.fills = imgFill("loco"); media.appendChild(ph); fillW(ph);
-  const cap = await T("Пример оборудования этого типа. Фото: Wikimedia Commons, CC BY 2.0", "Body/Small", "text/muted"); media.appendChild(cap); fillW(cap);
+  const cap = await T("Пример оборудования этого типа. В приложении здесь реальное фото с указанием автора и лицензии.", "Body/Small", "text/muted"); media.appendChild(cap); fillW(cap);
   const h = await T(IT.t, "Display/H2"); head.appendChild(h); fillW(h);
   const bpages = setP(inst("Button/Glass"), { "Подпись": "Страницы книги" }); head.appendChild(bpages); sc.pagesBtn = bpages;
   const bfav = setP(inst("Button/Glass"), { "Подпись": "В избранное", "Иконка": COMP["Icon/star"].id }); head.appendChild(bfav);
