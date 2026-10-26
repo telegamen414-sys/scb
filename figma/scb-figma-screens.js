@@ -95,8 +95,9 @@ function screen(key, name) {
 }
 function finish(sc) {
   const s = sc.frame;
-  const h = Math.max(H, Math.ceil(sc.body.height));
-  s.resize(W, h);
+  // экран = размер телефона; длинное содержимое прокручивается в прототипе
+  s.resize(W, H);
+  if (sc.body.height > H) s.overflowDirection = "VERTICAL";
   for (const f of sc.fixed) { s.appendChild(f.node); f.node.x = f.x; f.node.y = f.y; try { f.node.scrollBehavior = "FIXED"; } catch (e) {} }
   if (sc.fixed.length && !("scrollBehavior" in sc.fixed[0].node)) { try { s.numberOfFixedChildren = sc.fixed.length; } catch (e) {} }
 }
@@ -156,7 +157,7 @@ const ROMAN_IMG = (t) => /Шлагбаум|переезд/i.test(t) ? "barrier" 
   const sc = screen("home", "01 · Главная");
   const hero = figma.createFrame(); hero.name = "Обложка"; hero.resize(358, 300); hero.cornerRadius = 28; hero.clipsContent = true; hero.fills = imgFill("signal"); hero.strokes = [fv("line/default")]; hero.strokeWeight = 1;
   const shade = figma.createRectangle(); shade.resize(358, 300); shade.fills = [{ type: "GRADIENT_LINEAR", gradientTransform: [[0, 1, 0], [-1, 0, 1]], gradientStops: [{ position: 0.45, color: { r: 0.02, g: 0.02, b: 0.05, a: 0 } }, { position: 1, color: { r: 0.02, g: 0.02, b: 0.05, a: 0.92 } }] }]; shade.name = "Затемнение"; hero.appendChild(shade);
-  const h1 = await T("Справочник СЦБ", "Display/H1"); hero.appendChild(h1); h1.x = 22; h1.y = 300 - 22 - h1.height;
+  const h1 = await T("Справочник СЦБ", "Display/H1"); hero.appendChild(h1); h1.fontSize = 27; h1.textAutoResize = "HEIGHT"; h1.resize(314, h1.height); h1.x = 22; h1.y = 300 - 22 - h1.height;
   sc.body.appendChild(hero); fillW(hero);
   sc.docCards = {};
   for (const d of R.docs) {
