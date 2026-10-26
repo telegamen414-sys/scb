@@ -36,9 +36,19 @@
   button:active { transform: translateY(4px); box-shadow: inset 0 2px 6px rgba(20,10,60,.55); }
   button[disabled] { opacity: .6; }
   .err { color: #FCA5A5; font-size: 14px; min-height: 1.2em; }
+  #splash { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; overflow: hidden; background: #06060E; transition: opacity .45s ease; }
+  #splash.out { opacity: 0; pointer-events: none; }
+  #splash::before, #splash::after { content: ""; position: absolute; border-radius: 50%; filter: blur(120px); }
+  #splash::before { width: 520px; height: 420px; left: -260px; top: -220px; background: rgba(124,58,237,.42); }
+  #splash::after { width: 420px; height: 380px; left: 99px; top: 542px; background: rgba(34,211,238,.16); }
+  #splash .logo { position: relative; z-index: 1; margin: 0; font: 400 128px/1.12 "Times New Roman", Georgia, serif; text-align: center; color: rgba(255,255,255,.10);
+    -webkit-text-stroke: 1px #D92A2A; text-shadow: 0 0 1px rgba(255,255,255,.25), 0 2px 18px rgba(217,42,42,.25); animation: splashIn .9s cubic-bezier(.2,.8,.2,1) both; }
+  #splash .logo span { display: block; }
+  @keyframes splashIn { from { opacity: 0; transform: translateY(12px) scale(.96); letter-spacing: .1em; } to { opacity: 1; transform: none; } }
 </style>
 </head>
 <body>
+<div id="splash" aria-hidden="true"><p class="logo"><span>С</span><span>Ц</span><span>Б</span></p></div>
 <form class="card" id="f" autocomplete="off">
   <img src="icon-192.png" alt="">
   <h1>Справочник СЦБ</h1>
@@ -50,7 +60,7 @@
 </form>
 <script>
 (function () {
-  var SALT = 'Sgb8vgI8iStS1LS7R9NxxQ==', IV = 'DmNtswsWXzAfM9Sy', ITER = 310000, KEYNAME = 'scb.key.e05ded8595';
+  var SALT = 'Sgb8vgI8iStS1LS7R9NxxQ==', IV = 'JaOblEyRCgb3lr26', ITER = 310000, KEYNAME = 'scb.key.e05ded8595';
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
   var b64 = function (s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
   var toB64 = function (buf) { var u = new Uint8Array(buf), s = ''; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); };
@@ -64,7 +74,10 @@
       return crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(data, 0, 12) }, key, new Uint8Array(data, 12));
     }).then(function (plain) { return new TextDecoder().decode(plain); });
   }
-  function show(html) { document.open(); document.write(html); document.close(); }
+  var T0 = Date.now(), SPLASH = 1500;
+  var hideSplash = function () { var sp = document.getElementById('splash'); if (sp && !sp.classList.contains('out')) { sp.classList.add('out'); setTimeout(function () { sp.remove(); }, 500); } };
+  setTimeout(function () { if (!store.get()) hideSplash(); }, SPLASH);
+  function show(html) { var wait = Math.max(0, SPLASH - (Date.now() - T0)); setTimeout(function () { document.open(); document.write(html); document.close(); }, wait); }
   function derive(pw) {
     return crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']).then(function (base) {
       return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(SALT), iterations: ITER, hash: 'SHA-256' }, base,
@@ -81,7 +94,7 @@
       crypto.subtle.importKey('raw', b64(saved), 'AES-GCM', true, ['decrypt']).then(open).then(show).catch(function () {
         // Не расшифровалось или нет сети: чаще всего файл ещё обновляется на сервере. Ключ НЕ стираем — пробуем снова.
         if (n < 4) { refetch(); setTimeout(function () { tryOpen(n + 1); }, 1500 * (n + 1)); return; }
-        card.style.visibility = '';
+        card.style.visibility = ''; hideSplash();
         document.getElementById('err').textContent = 'Не удалось открыть — проверьте интернет и откройте приложение снова.';
       });
     };
