@@ -16,11 +16,11 @@
 <style>
   :root { color-scheme: dark; }
   html, body { margin: 0; height: 100%; background: #06060E; color: #F4F4FF; font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  body { display: grid; place-items: center; padding: 24px 16px; box-sizing: border-box;
-    background: radial-gradient(420px 360px at 0% 0%, rgba(124,58,237,.42), transparent 62%),
-                radial-gradient(380px 340px at 100% 60%, rgba(34,211,238,.16), transparent 62%), #06060E; }
+  body { display: grid; place-items: center; padding: 24px 16px; box-sizing: border-box; background: transparent; }
+  body::after, #splash::after { content: ""; position: fixed; inset: 0; z-index: -1; background: url(bg.jpg) 86% 50% / cover no-repeat, #06060E; }
   .card { width: 100%; max-width: 360px; box-sizing: border-box; padding: 28px 22px 24px; border-radius: 28px;
-    background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04)); border: 1px solid rgba(255,255,255,.10);
+    background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05)); border: 1px solid rgba(255,255,255,.14);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2);
     box-shadow: 0 30px 60px -30px rgba(0,0,0,.9); display: grid; gap: 14px; }
   img { width: 72px; height: 72px; border-radius: 20px; box-shadow: 0 10px 30px -8px rgba(124,58,237,.7); }
   h1 { margin: 4px 0 0; font-size: 22px; }
@@ -38,9 +38,8 @@
   .err { color: #FCA5A5; font-size: 14px; min-height: 1.2em; }
   #splash { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; overflow: hidden; background: #06060E; transition: opacity .45s ease; }
   #splash.out { opacity: 0; pointer-events: none; }
-  #splash::before, #splash::after { content: ""; position: absolute; border-radius: 50%; filter: blur(120px); }
-  #splash::before { width: 520px; height: 420px; left: -260px; top: -220px; background: rgba(124,58,237,.42); }
-  #splash::after { width: 420px; height: 380px; left: 99px; top: 542px; background: rgba(34,211,238,.16); }
+  #splash { isolation: isolate; background: transparent; }
+  #splash::after { position: absolute; }
   #splash .logo { position: relative; z-index: 1; margin: 0; font: 400 128px/1.12 "Times New Roman", Georgia, serif; text-align: center; color: rgba(255,255,255,.10);
     -webkit-text-stroke: 1px #D92A2A; text-shadow: 0 0 1px rgba(255,255,255,.25), 0 2px 18px rgba(217,42,42,.25); animation: splashIn .9s cubic-bezier(.2,.8,.2,1) both; }
   #splash .logo span { display: block; }
@@ -60,7 +59,7 @@
 </form>
 <script>
 (function () {
-  var SALT = 'Sgb8vgI8iStS1LS7R9NxxQ==', IV = '+nmbqNJMdG7Cnb9Y', ITER = 310000, KEYNAME = 'scb.key.e05ded8595';
+  var SALT = 'Sgb8vgI8iStS1LS7R9NxxQ==', IV = 'leiSGYozshv4n6zr', ITER = 310000, KEYNAME = 'scb.key.e05ded8595';
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
   var b64 = function (s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
   var toB64 = function (buf) { var u = new Uint8Array(buf), s = ''; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); };
