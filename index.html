@@ -71,9 +71,114 @@
   <button class="glass" id="go" type="submit">Открыть</button>
   <div class="err" id="err" role="alert"></div>
 </form>
+<script>/* «Жидкое стекло»: внутрь элемента кладётся копия фонового фото, выровненная с фоном,
+   и искривляется SVG-фильтром у краёв (преломление + лёгкая радужность). Работает в Chrome/Android и Safari/iOS. */
+(function () {
+  var NS = 'http://www.w3.org/2000/svg', svg = null, uid = 0, items = [], IW = 760, IH = 1126, raf = 0;
+  function ensureSvg() {
+    if (svg && svg.isConnected) return;
+    svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';
+    document.body.appendChild(svg);
+  }
+  // карта смещений: у края (полоса bevel) фон «затягивается» внутрь, как в линзе
+  function dmap(w, h, M, r, B) {
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    var x = c.getContext('2d'), d = x.createImageData(w, h), D = d.data;
+    var iw = w - 2 * M, ih = h - 2 * M; r = Math.min(r, iw / 2, ih / 2);
+    for (var j = 0; j < h; j++) for (var i = 0; i < w; i++) {
+      var px = i + .5 - M, py = j + .5 - M, cx = px - iw / 2, cy = py - ih / 2;
+      var qx = Math.abs(cx) - (iw / 2 - r), qy = Math.abs(cy) - (ih / 2 - r);
+      var ax = Math.max(qx, 0), ay = Math.max(qy, 0);
+      var sd = Math.sqrt(ax * ax + ay * ay) + Math.min(Math.max(qx, qy), 0) - r;
+      var dx = 0, dy = 0;
+      if (sd < 0 && sd > -B) {
+        var nx, ny;
+        if (qx > 0 && qy > 0) { var l = Math.sqrt(ax * ax + ay * ay) || 1; nx = ax / l; ny = ay / l; }
+        else if (qx > qy) { nx = 1; ny = 0; } else { nx = 0; ny = 1; }
+        nx *= cx < 0 ? -1 : 1; ny *= cy < 0 ? -1 : 1;
+        var t = 1 + sd / B, f = t * t * t;
+        dx = -nx * f; dy = -ny * f;
+      }
+      var k = (j * w + i) * 4; D[k] = 128 + dx * 127; D[k + 1] = 128 + dy * 127; D[k + 2] = 128; D[k + 3] = 255;
+    }
+    x.putImageData(d, 0, 0); return c.toDataURL();
+  }
+  function mkFilter(w, h, M, r, o) {
+    var id = 'lgf' + (++uid), s = o.scale, f = document.createElementNS(NS, 'filter');
+    f.setAttribute('id', id); f.setAttribute('x', '0'); f.setAttribute('y', '0'); f.setAttribute('width', w); f.setAttribute('height', h);
+    f.setAttribute('filterUnits', 'userSpaceOnUse'); f.setAttribute('primitiveUnits', 'userSpaceOnUse'); f.setAttribute('color-interpolation-filters', 'sRGB');
+    var src = dmap(w, h, M, r, o.bevel);
+    function el(n, a) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); f.appendChild(e); return e; }
+    var im = el('feImage', { x: 0, y: 0, width: w, height: h, preserveAspectRatio: 'none', result: 'm' });
+    im.setAttribute('href', src); im.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', src);
+    el('feGaussianBlur', { 'in': 'SourceGraphic', stdDeviation: o.blur, result: 'b' });
+    if (o.disp) {
+      el('feDisplacementMap', { 'in': 'b', in2: 'm', scale: s * (1 + o.disp), xChannelSelector: 'R', yChannelSelector: 'G', result: 'dr' });
+      el('feDisplacementMap', { 'in': 'b', in2: 'm', scale: s, xChannelSelector: 'R', yChannelSelector: 'G', result: 'dg' });
+      el('feDisplacementMap', { 'in': 'b', in2: 'm', scale: s * (1 - o.disp), xChannelSelector: 'R', yChannelSelector: 'G', result: 'db' });
+      el('feColorMatrix', { 'in': 'dr', type: 'matrix', values: '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0', result: 'r' });
+      el('feColorMatrix', { 'in': 'dg', type: 'matrix', values: '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0', result: 'g' });
+      el('feColorMatrix', { 'in': 'db', type: 'matrix', values: '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0', result: 'bb' });
+      el('feBlend', { 'in': 'r', in2: 'g', mode: 'screen', result: 'rg' });
+      el('feBlend', { 'in': 'rg', in2: 'bb', mode: 'screen', result: 'd' });
+    } else el('feDisplacementMap', { 'in': 'b', in2: 'm', scale: s, xChannelSelector: 'R', yChannelSelector: 'G', result: 'd' });
+    el('feColorMatrix', { 'in': 'd', type: 'saturate', values: o.sat });
+    return f;
+  }
+  function pos(it, r) {
+    r = r || it.el.getBoundingClientRect();
+    var W = innerWidth, H = innerHeight, sc = Math.max(W / IW, H / IH), bw = IW * sc, bh = IH * sc, M = it.o.M;
+    var bx = (W - bw) * .86 - r.left + M, by = (H - bh) * .5 - r.top + M;
+    it.lay.style.backgroundSize = '100% 100%, ' + bw + 'px ' + bh + 'px';
+    it.lay.style.backgroundPosition = '0 0, ' + bx + 'px ' + by + 'px';
+  }
+  function size(it) {
+    var M = it.o.M, w = it.el.offsetWidth + 2 * M, h = it.el.offsetHeight + 2 * M;
+    if (w < 2 * M + 4 || h < 2 * M + 4) return;
+    if (w !== it.w || h !== it.h) {
+      it.w = w; it.h = h; it.lay.style.width = w + 'px'; it.lay.style.height = h + 'px';
+      var rad = parseFloat(getComputedStyle(it.el).borderTopLeftRadius) || 0;
+      if (it.f) it.f.remove(); ensureSvg(); it.f = mkFilter(w, h, M, rad, it.o); svg.appendChild(it.f);
+      it.lay.style.filter = 'url(#' + it.f.id + ')';
+    }
+    pos(it);
+  }
+  function add(el, o) {
+    if (el._lg) return;
+    o = Object.assign({ img: 'none', tint: 'rgba(255,255,255,.08)', bevel: 18, scale: 48, blur: 1.5, M: 28, disp: .12, sat: 1.25 }, o || {});
+    if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+    el.style.isolation = 'isolate'; el.style.overflow = 'hidden';
+    el.style.webkitBackdropFilter = 'none'; el.style.backdropFilter = 'none'; el.style.backgroundColor = 'transparent';
+    var lay = document.createElement('span'); lay.className = 'lg-layer'; lay.setAttribute('aria-hidden', 'true');
+    lay.style.cssText = 'position:absolute;z-index:-1;pointer-events:none;left:' + -o.M + 'px;top:' + -o.M + 'px;background-repeat:no-repeat;background-image:linear-gradient(' + o.tint + ',' + o.tint + '),' + o.img;
+    el.insertBefore(lay, el.firstChild);
+    var it = { el: el, lay: lay, o: o, w: 0, h: 0 }; el._lg = it; items.push(it); size(it);
+  }
+  function prune() { items = items.filter(function (it) { if (it.el.isConnected) return true; if (it.f) it.f.remove(); return false; }); }
+  function tick() { raf = 0; for (var i = 0; i < items.length; i++) pos(items[i]); }
+  addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(tick); }, { passive: true });
+  addEventListener('resize', function () { prune(); items.forEach(size); });
+  window.LG = {
+    add: add, refresh: function () { prune(); items.forEach(size); },
+    scan: function (sel, o) { prune(); document.querySelectorAll(sel).forEach(function (e) { if (!e.closest('.pg-layer')) add(e, o); }); },
+    pos: tick
+  };
+})();
+
+(function () {
+  if (!window.LG) return; var B = 'url(bgb.jpg)';
+  LG.add(document.getElementById('f'), { img: B, bevel: 30, scale: 80, M: 34, blur: 2.5 });
+  LG.add(document.querySelector('.logo2'), { img: B, bevel: 18, scale: 44, M: 20, tint: 'rgba(120,110,255,.16)' });
+  LG.add(document.querySelector('.field'), { img: B, bevel: 18, scale: 44, M: 20, tint: 'rgba(255,255,255,.03)' });
+  LG.add(document.getElementById('go'), { img: B, bevel: 18, scale: 44, M: 20, tint: 'rgba(255,255,255,.04)' });
+  try { document.fonts && document.fonts.ready.then(function () { LG.refresh(); }); } catch (e) {}
+})();
+</script>
 <script>
 (function () {
-  var SALT = 'Sgb8vgI8iStS1LS7R9NxxQ==', IV = 'gPI8R2IxjJWLkHRd', ITER = 310000, KEYNAME = 'scb.key.e05ded8595';
+  var SALT = 'Sgb8vgI8iStS1LS7R9NxxQ==', IV = 'Jzzs7zHvS622vqBI', ITER = 310000, KEYNAME = 'scb.key.e05ded8595';
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
   var b64 = function (s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
   var toB64 = function (buf) { var u = new Uint8Array(buf), s = ''; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); };
