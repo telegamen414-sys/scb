@@ -1,6 +1,6 @@
 // Офлайн-кеш справочника. Версию меняет build.py при каждой сборке.
-const VERSION = 'scb-6d51651855';
-const CORE = ['./', './index.html', './app.bin', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './bg.jpg', './bgb.jpg'];
+const VERSION = 'scb-dc8e217846';
+const CORE = ['./', './index.html', './app.bin', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './bg.jpg', './bgb.jpg', './fonts/onest.woff', './fonts/unbounded.woff', './fonts/jbmono.woff'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(CORE)).then(() => self.skipWaiting()));

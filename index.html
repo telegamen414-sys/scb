@@ -14,8 +14,9 @@
 <link rel="icon" href="icon-192.png">
 <title>Справочник СЦБ</title>
 <style>
+  @font-face{font-family:"Unbounded";src:url(fonts/unbounded.woff) format("woff");font-weight:200 900;font-style:normal;font-display:swap}@font-face{font-family:"Onest";src:url(fonts/onest.woff) format("woff");font-weight:100 900;font-style:normal;font-display:swap}@font-face{font-family:"JetBrains Mono";src:url(fonts/jbmono.woff) format("woff");font-weight:100 800;font-style:normal;font-display:swap}
   :root { color-scheme: dark; }
-  html, body { margin: 0; height: 100%; background: #06060E; color: #F4F4FF; font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  html, body { margin: 0; height: 100%; background: #06060E; color: #F4F4FF; font: 16px/1.45 Onest, system-ui, -apple-system, "Segoe UI", sans-serif; }
   body { display: grid; place-items: center; padding: 24px 16px; box-sizing: border-box; background: transparent; }
   body::after, #splash::after { content: ""; position: fixed; inset: 0; z-index: -1; background: url(bgb.jpg) 86% 50% / cover no-repeat, #06060E; }
   #splash::after { background-image: url(bg.jpg); }
@@ -35,7 +36,7 @@
   p { margin: 0; color: #9A9AB8; font-size: 13px; }
   .field { position: relative; border-radius: 50px; box-shadow: 0 4px 4px rgba(0,0,0,.25); background: rgba(255,255,255,.01);
     -webkit-backdrop-filter: blur(6px) saturate(1.3); backdrop-filter: blur(6px) saturate(1.3); }
-  input[type=password] { width: 100%; box-sizing: border-box; font: 18px system-ui, sans-serif; color: #fff; padding: 0 20px; height: 60px; border-radius: 50px;
+  input[type=password] { width: 100%; box-sizing: border-box; font: 18px Onest, system-ui, sans-serif; color: #fff; padding: 0 20px; height: 60px; border-radius: 50px;
     background: transparent; border: 0; outline: 0; }
   input[type=password]::placeholder { color: #F9F9F9; opacity: .9; }
   .field:focus-within { box-shadow: 0 4px 4px rgba(0,0,0,.25), 0 0 0 4px rgba(34,211,238,.25); }
@@ -72,7 +73,7 @@
 </form>
 <script>
 (function () {
-  var SALT = 'Sgb8vgI8iStS1LS7R9NxxQ==', IV = 'ZYMfymZp5nLj0/gj', ITER = 310000, KEYNAME = 'scb.key.e05ded8595';
+  var SALT = 'Sgb8vgI8iStS1LS7R9NxxQ==', IV = 'gPI8R2IxjJWLkHRd', ITER = 310000, KEYNAME = 'scb.key.e05ded8595';
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
   var b64 = function (s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
   var toB64 = function (buf) { var u = new Uint8Array(buf), s = ''; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); };
