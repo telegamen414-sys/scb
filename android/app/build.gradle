@@ -1,0 +1,24 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'kz.scb.spravochnik'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'kz.scb.spravochnik'
+        minSdk 24
+        targetSdk 34
+        versionCode Integer.parseInt(System.getenv('APK_CODE') ?: '1')
+        versionName System.getenv('APK_NAME') ?: '1.0'
+    }
+    signingConfigs {
+        release {
+            storeFile file('../scb-release.jks')
+            storePassword 'scb-android-2026'
+            keyAlias 'scb'
+            keyPassword 'scb-android-2026'
+        }
+    }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.release }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
